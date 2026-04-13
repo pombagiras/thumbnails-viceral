@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Studio Vortex Visceral - Final</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fasthand&family=Rubik+Puddles&family=Creepster&display=swap" rel="stylesheet">
+    <style>
+        :root { --roxo: #1a051d; --sangue: #8b0000; --ouro: #c5a059; --preto: #050505; }
+        body { background: var(--preto); color: #ccc; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+        .accordion { width: 100%; max-width: 600px; background: #111; border: 1px solid #222; border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
+        .accordion-header { padding: 12px; background: linear-gradient(90deg, #000, var(--roxo)); display: flex; justify-content: space-between; cursor: pointer; color: var(--ouro); font-weight: bold; font-size: 0.75rem; text-transform: uppercase; }
+        .accordion-content { padding: 15px; display: none; background: #080808; }
+        .accordion.active .accordion-content { display: block; }
+        label { color: #555; font-size: 0.6rem; text-transform: uppercase; margin-top: 8px; display: block; }
+        input[type="text"], input[type="file"], select { width: 100%; padding: 10px; margin: 4px 0 10px; background: #000; border: 1px solid #333; color: #fff; border-radius: 4px; }
+        .btn-vortex { width: 100%; padding: 15px; background: var(--sangue); color: #fff; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
+        .btn-save { background: #4b1d52; margin-top: 10px; display: none; }
+        #canvas-render { width: 100%; display: none; border: 2px solid #222; }
+    </style>
+</head>
+<body>
+    <div class="accordion active" id="sec1">
+        <div class="accordion-header" onclick="toggle('sec1')">01. CONFIGURAÇÃO DA THUMBNAIL <span>▲</span></div>
+        <div class="accordion-content">
+            <input type="file" id="img-input" accept="image/*">
+            <input type="text" id="l1" placeholder="linha 1...">
+            <input type="text" id="l2" placeholder="linha 2 (DESTAQUE)...">
+            <input type="text" id="l3" placeholder="linha 3...">
+            <select id="font-select">
+                <option value="Rubik Puddles">Tinta Derretendo (Puddles)</option>
+                <option value="Fasthand">Pincelada Rápida (Fasthand)</option>
+                <option value="Creepster">Pichação Terror (Creepster)</option>
+            </select>
+            <select id="color-select">
+                <option value="#ff0000">Vermelho Visceral</option>
+                <option value="#ffffff">Branco Etéreo</option>
+                <option value="#c5a059">Ouro Velho</option>
+            </select>
+            <button class="btn-vortex" onclick="processar()">GERAR THUMBNAIL</button>
+        </div>
+    </div>
+    <div class="preview-container" style="width:100%; max-width:600px;">
+        <canvas id="canvas-render"></canvas>
+        <button class="btn-vortex btn-save" id="btn-download" onclick="downloadImagem()">BAIXAR PARA O COMPUTADOR</button>
+    </div>
+
+    <script>
+        function haptic() { if (navigator.vibrate) navigator.vibrate(40); }
+        function toggle(id) { haptic(); document.getElementById(id).classList.toggle('active'); }
+        const canvas = document.getElementById('canvas-render');
+        const ctx = canvas.getContext('2d');
+        let baseImg = new Image();
+
+        document.getElementById('img-input').onchange = (e) => {
+            const reader = new FileReader();
+            reader.onload = (ev) => baseImg.src = ev.target.result;
+            reader.readAsDataURL(e.target.files[0]);
+        };
+
+        function processar() {
+            haptic();
+            const fontName = document.getElementById('font-select').value;
+            document.fonts.load(`1em "${fontName}"`).then(() => render(fontName));
+        }
+
+        function render(font) {
+            if(!baseImg.src) return alert("Selecione uma imagem.");
+            canvas.width = 1280; canvas.height = 720; canvas.style.display = 'block';
+            const ratio = Math.max(canvas.width / baseImg.width, canvas.height / baseImg.height);
+            ctx.drawImage(baseImg, (canvas.width - baseImg.width * ratio) / 2, (canvas.height - baseImg.height * ratio) / 2, baseImg.width * ratio, baseImg.height * ratio);
+            ctx.fillStyle = "rgba(0,0,0,0.3)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            const linhas = [document.getElementById('l1').value, document.getElementById('l2').value, document.getElementById('l3').value];
+            const cor = document.getElementById('color-select').value;
+            ctx.textAlign = "center"; ctx.fillStyle = cor; ctx.shadowColor = "black"; ctx.shadowBlur = 15;
+            const startY = 320; const spacing = 120;
+            ctx.font = `bold 75px "${font}"`; if(linhas[0]) ctx.fillText(linhas[0], 640, startY);
+            ctx.font = `bold 125px "${font}"`; if(linhas[1]) ctx.fillText(linhas[1], 640, startY + spacing);
+            ctx.font = `bold 85px "${font}"`; if(linhas[2]) ctx.fillText(linhas[2], 640, startY + spacing * 2);
+            document.getElementById('btn-download').style.display = 'block';
+            canvas.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function downloadImagem() {
+            haptic();
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL('image/png');
+            link.download = `Vortex-Visceral-${Date.now()}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
